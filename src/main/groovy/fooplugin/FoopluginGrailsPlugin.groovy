@@ -46,6 +46,7 @@ Brief summary/description of the plugin.
     }
 
     void doWithDynamicMethods() {
+        println "Hello from FooPlugin!"
         // TODO Implement registering dynamic methods to classes (optional)
     }
 

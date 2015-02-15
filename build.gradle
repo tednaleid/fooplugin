@@ -24,16 +24,13 @@ apply plugin: "org.grails.grails-gsp"
 apply plugin: 'maven-publish'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
-// Used for publishing to central repository, remove if not needed
-apply from:'https://raw.githubusercontent.com/grails/grails-profile-repository/master/profiles/plugin/templates/grailsCentralPublishing.gradle'
-apply from:'https://raw.githubusercontent.com/grails/grails-profile-repository/master/profiles/plugin/templates/bintrayPublishing.gradle'
 
 ext {
   grailsVersion = project.grailsVersion
   gradleWrapperVersion = project.gradleWrapperVersion
 }
 
-version "0.1-SNAPSHOT"
+version "0.1"
 group "org.grails.plugins"
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
@@ -51,6 +48,63 @@ dependencyManagement {
     }
     applyMavenExclusions false
 }
+
+bintray {
+    user = System.getenv("BINTRAY_USER") ?: project.hasProperty("bintrayUser") ? project.bintrayUser : '' 
+    key = System.getenv("BINTRAY_KEY") ?: project.hasProperty("bintrayKey") ? project.bintrayKey : '' 
+    publications = ['maven']
+    pkg {
+        repo = 'testrepo'
+        userOrg = 'tednaleid'
+        name = "com.naleid.plugins:$project.name"
+        desc = "Grails $project.name plugin"
+        websiteUrl = "http://grails.org/plugin/${project.name}"
+        issueTrackerUrl = "https://github.com/tednaleid/${project.name}/issues"
+        vcsUrl = "https://github.com/tednaleid/${project.name}"
+        licenses = ['Apache-2.0']
+        publicDownloadNumbers = true
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifactId "${project.name}"
+            pom.withXml {
+                asNode().children().last() + {
+                    resolveStrategy = Closure.DELEGATE_FIRST
+                    name "${project.name}" 
+                    description "Grails ${project.name} plugin"
+                    url "https://github.com/tednaleid/${project.name}"
+                    scm {
+                        url "https://github.com/tednaleid/${project.name}"
+                        connection "scm:https://github.com/tednaleid/${project.name}.git"
+                        developerConnection "scm:https://github.com/tednaleid/${project.name}.git"
+                    }
+                    licenses {
+                        license {
+                            name 'The Apache Software License, Version 2.0'
+                            url 'http://www.apache.org/license/LICENSE-2.0.txt'
+                            distribution 'repo'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id 'tednaleid'
+                            name 'Ted Naleid'
+                            email 'contact@naleid.com'
+                        }
+                    }
+                }
+            }
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+        }
+    }
+}
+
+bintrayUpload.dependsOn build, sourcesJar, javadocJar
 
 dependencies {
   provided 'org.springframework.boot:spring-boot-starter-logging'
